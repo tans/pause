@@ -118,6 +118,13 @@ function renderSmokingFrame(ctx, w, h, time, dt, smoke, inhale, progress, exhale
   ctx.save();
   ctx.fillStyle = "rgba(30,41,59,0.9)";
   ctx.fillRect(charX, cigY, charWidth, cigHeight);
+  if (inhale) {
+    const glow = ctx.createLinearGradient(charX, 0, cigEnd, 0);
+    glow.addColorStop(0, "rgba(255, 80, 50, 0.15)");
+    glow.addColorStop(1, "rgba(255, 60, 40, 0.55)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(charX, cigY, charWidth, cigHeight);
+  }
   ctx.restore();
 
   // Ash scratches
@@ -135,19 +142,20 @@ function renderSmokingFrame(ctx, w, h, time, dt, smoke, inhale, progress, exhale
 
   // Ember
   const emberPulse =
-    0.2 + 0.8 * (inhale ? 1 : 0.4 + 0.6 * Math.sin(time * 2.5) * 0.5 + 0.3);
+    0.2 + 0.8 * (inhale ? 1.2 : 0.4 + 0.6 * Math.sin(time * 2.5) * 0.5 + 0.3);
   const emberX = cigEnd + 2;
   const emberY = centerY;
   ctx.save();
-  const glow = ctx.createRadialGradient(emberX, emberY, 2, emberX, emberY, 20);
-  glow.addColorStop(0, `rgba(255, 90, 60, ${0.6 * emberPulse})`);
+  const glow = ctx.createRadialGradient(emberX, emberY, 2, emberX, emberY, 26);
+  glow.addColorStop(0, `rgba(255, 70, 40, ${0.75 * emberPulse})`);
+  glow.addColorStop(0.6, `rgba(255, 90, 60, ${0.35 * emberPulse})`);
   glow.addColorStop(1, "rgba(255, 90, 60, 0)");
   ctx.fillStyle = glow;
   ctx.beginPath();
   ctx.arc(emberX, emberY, 20, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = `rgba(255, 120, 80, ${0.5 + 0.4 * emberPulse})`;
+  ctx.fillStyle = `rgba(255, 80, 50, ${0.6 + 0.4 * emberPulse})`;
   ctx.beginPath();
   ctx.arc(emberX, emberY, 5, 0, Math.PI * 2);
   ctx.fill();
@@ -164,21 +172,19 @@ function renderSmokingFrame(ctx, w, h, time, dt, smoke, inhale, progress, exhale
 
   if (exhaleAt) {
     const since = time - exhaleAt;
-    if (since < 1.4) {
-      const alpha = clamp(1 - since / 1.4, 0, 1) * 0.35;
+    if (since < 1.6) {
+      const t = clamp(since / 1.6, 0, 1);
+      const mouthX = cigX + filterLength + 6;
+      const ringX = mouthX + t * 160;
+      const ringY = emberY - t * 120;
+      const radius = 16 + t * 36;
+      const alpha = (1 - t) * 0.45;
       ctx.save();
-      const fog = ctx.createRadialGradient(
-        w * 0.6,
-        h * 0.4,
-        20,
-        w * 0.6,
-        h * 0.4,
-        w
-      );
-      fog.addColorStop(0, `rgba(226,232,240,${alpha})`);
-      fog.addColorStop(1, "rgba(226,232,240,0)");
-      ctx.fillStyle = fog;
-      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = `rgba(226,232,240,${alpha})`;
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.arc(ringX, ringY, radius, 0, Math.PI * 2);
+      ctx.stroke();
       ctx.restore();
     }
   }

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import SmokingCigaretteStage, {
-  BURN_DURATION_MS,
-} from "./SmokingCigaretteStage.jsx";
+import SmokingSession from "./SmokingSession.jsx";
+import { BURN_DURATION_MS } from "./SmokingCigaretteStage.jsx";
 import { getKV, putKV } from "../lib/kv";
 
 const EMAIL_STORAGE_KEY = "pause:email";
@@ -23,10 +22,11 @@ export default function PauseApp() {
   const [startedAt, setStartedAt] = useState(null);
   const [endedAt, setEndedAt] = useState(null);
   const inhaleRef = useRef(false);
-  const [exhaleFog, setExhaleFog] = useState(false);
-  const fogTimerRef = useRef(null);
   const [exhaleMode, setExhaleMode] = useState(false);
   const exhaleTimerRef = useRef(null);
+  const audioCtxRef = useRef(null);
+  const inhaleAudioRef = useRef(null);
+  const exhaleAudioRef = useRef(null);
 
   useEffect(() => {
     if (!email) return;
@@ -77,8 +77,9 @@ export default function PauseApp() {
 
   useEffect(() => {
     return () => {
-      if (fogTimerRef.current) clearTimeout(fogTimerRef.current);
       if (exhaleTimerRef.current) clearTimeout(exhaleTimerRef.current);
+      stopInhaleSound(inhaleAudioRef);
+      stopExhaleSound(exhaleAudioRef);
     };
   }, []);
 
@@ -188,9 +189,10 @@ export default function PauseApp() {
     if (inhaleRef.current) return;
     inhaleRef.current = true;
     setInhale(true);
-    setExhaleFog(false);
     setExhaleMode(false);
     if (exhaleTimerRef.current) clearTimeout(exhaleTimerRef.current);
+    stopExhaleSound(exhaleAudioRef);
+    startInhaleSound(audioCtxRef, inhaleAudioRef);
   };
 
   const handleInhaleEnd = (event) => {
@@ -200,16 +202,14 @@ export default function PauseApp() {
     if (!inhaleRef.current) return;
     inhaleRef.current = false;
     setInhale(false);
-    setExhaleFog(true);
-    if (fogTimerRef.current) clearTimeout(fogTimerRef.current);
-    fogTimerRef.current = setTimeout(() => {
-      setExhaleFog(false);
-    }, 900);
     setExhaleMode(true);
     if (exhaleTimerRef.current) clearTimeout(exhaleTimerRef.current);
     exhaleTimerRef.current = setTimeout(() => {
       setExhaleMode(false);
-    }, 4000);
+      stopExhaleSound(exhaleAudioRef);
+    }, 800);
+    stopInhaleSound(inhaleAudioRef);
+    startExhaleSound(audioCtxRef, exhaleAudioRef);
   };
 
   if (step === "login" || step === "loading") {
@@ -250,53 +250,20 @@ export default function PauseApp() {
   }
 
   if (step === "session") {
-    const statusLabel = inhale ? "吸" : exhaleMode ? "呼" : "自燃";
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100">
-        <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-6 py-10">
-          <div
-            className="fixed inset-0 z-10 touch-none"
-            onPointerDown={handleInhaleStart}
-            onPointerUp={handleInhaleEnd}
-            onPointerLeave={handleInhaleEnd}
-            onPointerCancel={handleInhaleEnd}
-          />
-          <div className="flex items-start justify-between gap-4">
-            <div className="text-sm text-slate-300">{statusLabel}</div>
-            <button
-              className="relative z-20 rounded-full border border-orange-400/50 bg-orange-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-orange-200 shadow-[0_0_18px_rgba(251,146,60,0.2)] hover:border-orange-400/80 hover:text-orange-100"
-              onClick={() => {
-                setInhale(false);
-                inhaleRef.current = false;
-                setEndedAt(Date.now());
-                setStep("end");
-              }}
-            >
-              掐灭
-            </button>
-          </div>
-
-          <div className="mt-8 flex flex-1 flex-col items-center justify-center">
-            <div
-              className="fixed inset-0 pointer-events-none transition-opacity duration-700"
-              style={{
-                opacity: exhaleFog ? 1 : 0,
-                background:
-                  "radial-gradient(circle at 70% 40%, rgba(226,232,240,0.35), rgba(15,23,42,0.05) 60%, rgba(2,6,23,0.65) 100%)",
-              }}
-            />
-            <div
-              className="relative flex h-56 w-full max-w-2xl touch-none select-none items-center justify-center rounded-3xl border border-white/10 bg-slate-900/40 shadow-[0_0_70px_rgba(251,146,60,0.12)]"
-            >
-              <SmokingCigaretteStage inhale={inhale} startedAt={startedAt} />
-              <div className="pointer-events-none absolute text-center">
-                <div className="text-sm text-slate-200">{statusLabel}</div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
+      <SmokingSession
+        inhale={inhale}
+        exhaleMode={exhaleMode}
+        startedAt={startedAt}
+        onInhaleStart={handleInhaleStart}
+        onInhaleEnd={handleInhaleEnd}
+        onExtinguish={() => {
+          setInhale(false);
+          inhaleRef.current = false;
+          setEndedAt(Date.now());
+          setStep("end");
+        }}
+      />
     );
   }
 
@@ -501,6 +468,89 @@ function formatDuration(durationMs) {
   if (!durationMs || durationMs < 0) return "0 分钟";
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return `${minutes} 分钟`;
+}
+
+function startInhaleSound(audioCtxRef, nodeRef) {
+  startNoise(audioCtxRef, nodeRef, {
+    filterType: "bandpass",
+    frequency: 1000,
+    q: 10,
+    gain: 0.4,
+  });
+}
+
+function stopInhaleSound(nodeRef) {
+  stopNoise(nodeRef);
+}
+
+function startExhaleSound(audioCtxRef, nodeRef) {
+  startNoise(audioCtxRef, nodeRef, {
+    filterType: "notch",
+    frequency: 1200,
+    q: 6,
+    gain: 0.06,
+  });
+}
+
+function stopExhaleSound(nodeRef) {
+  stopNoise(nodeRef);
+}
+
+function startNoise(audioCtxRef, nodeRef, config) {
+  const AudioContext =
+    globalThis.AudioContext || globalThis.webkitAudioContext;
+  if (!AudioContext) return;
+
+  if (!audioCtxRef.current) {
+    audioCtxRef.current = new AudioContext();
+  }
+  const ctx = audioCtxRef.current;
+  if (ctx.state === "suspended") {
+    ctx.resume().catch(() => {});
+  }
+
+  if (nodeRef.current) return;
+
+  const { filterType, frequency, q, gain } = config;
+  const buffer = ctx.createBuffer(1, ctx.sampleRate * 1, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i += 1) {
+    data[i] = Math.random() * 2 - 1;
+  }
+
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = filterType;
+  filter.frequency.value = frequency;
+  filter.Q.value = q;
+
+  const gainNode = ctx.createGain();
+  gainNode.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gainNode.gain.linearRampToValueAtTime(gain, ctx.currentTime + 0.06);
+
+  source.connect(filter);
+  filter.connect(gainNode);
+  gainNode.connect(ctx.destination);
+
+  source.start();
+
+  nodeRef.current = { source, filter, gainNode, ctx };
+}
+
+function stopNoise(nodeRef) {
+  if (!nodeRef.current) return;
+  const { source, filter, gainNode, ctx } = nodeRef.current;
+  gainNode.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.08);
+  source.stop(ctx.currentTime + 0.2);
+  source.onended = () => {
+    source.disconnect();
+    filter.disconnect();
+    gainNode.disconnect();
+  };
+  nodeRef.current = null;
 }
 
 function buildHeatmapDays(count) {
