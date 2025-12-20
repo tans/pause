@@ -24,6 +24,7 @@ export default function PauseApp() {
   const inhaleRef = useRef(false);
   const [exhaleMode, setExhaleMode] = useState(false);
   const exhaleTimerRef = useRef(null);
+  const exhaleSoundDelayRef = useRef(null);
   const audioCtxRef = useRef(null);
   const inhaleAudioRef = useRef(null);
   const exhaleAudioRef = useRef(null);
@@ -78,6 +79,9 @@ export default function PauseApp() {
   useEffect(() => {
     return () => {
       if (exhaleTimerRef.current) clearTimeout(exhaleTimerRef.current);
+      if (exhaleSoundDelayRef.current) {
+        clearTimeout(exhaleSoundDelayRef.current);
+      }
       stopInhaleSound(inhaleAudioRef);
       stopExhaleSound(exhaleAudioRef);
     };
@@ -191,6 +195,7 @@ export default function PauseApp() {
     setInhale(true);
     setExhaleMode(false);
     if (exhaleTimerRef.current) clearTimeout(exhaleTimerRef.current);
+    if (exhaleSoundDelayRef.current) clearTimeout(exhaleSoundDelayRef.current);
     stopExhaleSound(exhaleAudioRef);
     startInhaleSound(audioCtxRef, inhaleAudioRef);
   };
@@ -207,9 +212,12 @@ export default function PauseApp() {
     exhaleTimerRef.current = setTimeout(() => {
       setExhaleMode(false);
       stopExhaleSound(exhaleAudioRef);
-    }, 800);
+    }, 1800);
     stopInhaleSound(inhaleAudioRef);
-    startExhaleSound(audioCtxRef, exhaleAudioRef);
+    if (exhaleSoundDelayRef.current) clearTimeout(exhaleSoundDelayRef.current);
+    exhaleSoundDelayRef.current = setTimeout(() => {
+      startExhaleSound(audioCtxRef, exhaleAudioRef);
+    }, 1000);
   };
 
   if (step === "login" || step === "loading") {
@@ -475,7 +483,7 @@ function startInhaleSound(audioCtxRef, nodeRef) {
     filterType: "bandpass",
     frequency: 1000,
     q: 10,
-    gain: 0.4,
+    gain: 0.6,
   });
 }
 
@@ -488,7 +496,7 @@ function startExhaleSound(audioCtxRef, nodeRef) {
     filterType: "notch",
     frequency: 1200,
     q: 6,
-    gain: 0.06,
+    gain: 0.03,
   });
 }
 
@@ -543,7 +551,9 @@ function startNoise(audioCtxRef, nodeRef, config) {
 function stopNoise(nodeRef) {
   if (!nodeRef.current) return;
   const { source, filter, gainNode, ctx } = nodeRef.current;
-  gainNode.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.08);
+  gainNode.gain.cancelScheduledValues(ctx.currentTime);
+  gainNode.gain.setValueAtTime(gainNode.gain.value || 0.0001, ctx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
   source.stop(ctx.currentTime + 0.2);
   source.onended = () => {
     source.disconnect();
