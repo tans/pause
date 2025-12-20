@@ -172,8 +172,10 @@ function renderSmokingFrame(ctx, w, h, time, dt, smoke, inhale, progress, exhale
 
   if (exhaleAt) {
     const since = time - exhaleAt;
-    if (since < 1.6) {
-      const t = clamp(since / 1.6, 0, 1);
+    const delay = 1.5;
+    const duration = 1.6;
+    if (since > delay && since < delay + duration) {
+      const t = clamp((since - delay) / duration, 0, 1);
       const mouthX = cigX + filterLength + 6;
       const ringX = mouthX + t * 160;
       const ringY = emberY - t * 120;
