@@ -252,6 +252,17 @@ export default function PauseApp() {
               ) : null}
             </div>
           </div>
+          <div className="mt-8 text-xs text-slate-500">
+            Powered by{" "}
+            <a
+              className="text-slate-300 hover:text-slate-100"
+              href="https://minapp.xin"
+              target="_blank"
+              rel="noreferrer"
+            >
+              minapp.xin
+            </a>
+          </div>
         </div>
       </div>
     );
@@ -292,6 +303,17 @@ export default function PauseApp() {
               </div>
             </div>
             <h1 className="mt-4 text-2xl font-semibold">这一根掐灭了</h1>
+          </div>
+          <div className="mt-8 text-xs text-slate-500">
+            Powered by{" "}
+            <a
+              className="text-slate-300 hover:text-slate-100"
+              href="https://minapp.xin"
+              target="_blank"
+              rel="noreferrer"
+            >
+              minapp.xin
+            </a>
           </div>
         </div>
       </div>
@@ -420,6 +442,17 @@ export default function PauseApp() {
           </div>
         </div>
 
+        <div className="mt-10 text-center text-xs text-slate-500">
+          Powered by{" "}
+          <a
+            className="text-slate-300 hover:text-slate-100"
+            href="https://minapp.xin"
+            target="_blank"
+            rel="noreferrer"
+          >
+            minapp.xin
+          </a>
+        </div>
       </div>
     </div>
   );

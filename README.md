@@ -38,3 +38,5 @@
 npm install
 npm run dev
 ```
+
+Powered by [minapp.xin](https://minapp.xin)

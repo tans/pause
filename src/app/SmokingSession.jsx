@@ -34,6 +34,18 @@ export default function SmokingSession({
         <div className="mt-8 flex flex-1 flex-col items-center justify-center">
           <SmokingCigaretteStage inhale={inhale} startedAt={startedAt} />
         </div>
+
+        <div className="relative z-20 text-center text-xs text-slate-500">
+          Powered by{" "}
+          <a
+            className="text-slate-300 hover:text-slate-100"
+            href="https://minapp.xin"
+            target="_blank"
+            rel="noreferrer"
+          >
+            minapp.xin
+          </a>
+        </div>
       </div>
     </div>
   );
