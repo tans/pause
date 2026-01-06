@@ -1,16 +1,40 @@
-# React + Vite
+# Pause
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+一个帮助你在“想抽那一下”里停住的轻量 Web App。它不做戒烟承诺，也不替你做选择；只提供一个短暂、可控、完整的“动作 + 结束感”，让冲动能有出口。
 
-Currently, two official plugins are available:
+体验地址：https://pause.minapp.xin
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 适用场景
 
-## React Compiler
+- 偶发性冲动，不想点烟或拿 vape
+- 需要一个被允许的暂停仪式（压力、无聊、情绪切换）
+- 希望用可控的行为替代“硬忍”
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 核心体验
 
-## Expanding the ESLint configuration
+- 打开即用，无登录干扰
+- 一键“来一根”，快速进入
+- 长按吸、松开呼：动作与呼吸节奏由你掌控
+- 有清晰的燃烧进度与结束提示，避免无限使用
+- 支持轻量“戒断”记录，帮助看见冲动强度的变化
+- 记录动机与使用情况，沉淀为可回顾的行为轨迹
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 设计原则
+
+- 不评判用户“抽不抽”
+- 不做医疗或戒断承诺
+- 结束感优先于使用感
+- 克制、无社交、无打卡压力
+
+## 技术与实现
+
+- Vite + React
+- 移动端优先，适配 PWA
+- 交互以 touch/press 事件为核心
+
+## 本地开发
+
+```bash
+npm install
+npm run dev
+```
